@@ -1,7 +1,10 @@
 # en la terminal antes de ejecutar este script, instalar las librerías necesarias con:
-#pip install pandas numpy matplotlib seaborn scipy scikit-learn missingno
+# pip install pandas numpy matplotlib seaborn scipy scikit-learn missingno
 
 
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import label_binarize
+from sklearn.feature_selection import RFE
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +32,8 @@ print("\nPrimeras 5 filas:")
 print(df.head())
 
 # 2. Análisis gráfico de variables categóricas
-categorical_cols = ['mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'prefarea', 'furnishingstatus']
+categorical_cols = ['mainroad', 'guestroom', 'basement',
+                    'hotwaterheating', 'airconditioning', 'prefarea', 'furnishingstatus']
 plt.figure(figsize=(15, 10))
 for i, col in enumerate(categorical_cols, 1):
     plt.subplot(3, 3, i)
@@ -98,7 +102,8 @@ pca_result = pca.fit_transform(scaled_data)
 
 # Varianza explicada
 plt.figure(figsize=(10, 6))
-plt.plot(range(1, len(pca.explained_variance_ratio_) + 1), pca.explained_variance_ratio_.cumsum(), marker='o')
+plt.plot(range(1, len(pca.explained_variance_ratio_) + 1),
+         pca.explained_variance_ratio_.cumsum(), marker='o')
 plt.xlabel('Número de Componentes')
 plt.ylabel('Varianza Explicada Acumulada')
 plt.title('Varianza Explicada por Componentes')
@@ -119,9 +124,11 @@ plt.show()
 # Preparar datos para el modelo
 X = df_encoded.drop('furnishingstatus', axis=1)
 y = df_encoded['furnishingstatus']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42)
 
-model1 = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
+model1 = LogisticRegression(
+    multi_class='multinomial', solver='lbfgs', max_iter=1000)
 model1.fit(X_train, y_train)
 y_pred1 = model1.predict(X_test)
 
@@ -132,13 +139,14 @@ print("Reporte de clasificación:\n", classification_report(y_test, y_pred1))
 
 # 12. Modelo 2: Método backward (eliminación recursiva de variables)
 # Implementación manual backward con importancia de características
-from sklearn.feature_selection import RFE
-selector = RFE(LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000), n_features_to_select=5)
+selector = RFE(LogisticRegression(multi_class='multinomial',
+               solver='lbfgs', max_iter=1000), n_features_to_select=5)
 selector.fit(X_train, y_train)
 X_train_selected = selector.transform(X_train)
 X_test_selected = selector.transform(X_test)
 
-model2 = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
+model2 = LogisticRegression(
+    multi_class='multinomial', solver='lbfgs', max_iter=1000)
 model2.fit(X_train_selected, y_train)
 y_pred2 = model2.predict(X_test_selected)
 
@@ -160,8 +168,6 @@ print("13. Comparación de Modelos:")
 print(metrics_df)
 
 # 14. Curvas ROC para modelos (multiclase)
-from sklearn.preprocessing import label_binarize
-from sklearn.metrics import roc_auc_score
 
 y_test_bin = label_binarize(y_test, classes=[0, 1, 2])
 n_classes = y_test_bin.shape[1]
@@ -169,21 +175,25 @@ n_classes = y_test_bin.shape[1]
 # Curva ROC para Modelo 1
 fpr1, tpr1, roc_auc1 = dict(), dict(), dict()
 for i in range(n_classes):
-    fpr1[i], tpr1[i], _ = roc_curve(y_test_bin[:, i], model1.predict_proba(X_test)[:, i])
+    fpr1[i], tpr1[i], _ = roc_curve(
+        y_test_bin[:, i], model1.predict_proba(X_test)[:, i])
     roc_auc1[i] = auc(fpr1[i], tpr1[i])
 
 # Curva ROC para Modelo 2
 fpr2, tpr2, roc_auc2 = dict(), dict(), dict()
 for i in range(n_classes):
-    fpr2[i], tpr2[i], _ = roc_curve(y_test_bin[:, i], model2.predict_proba(X_test_selected)[:, i])
+    fpr2[i], tpr2[i], _ = roc_curve(
+        y_test_bin[:, i], model2.predict_proba(X_test_selected)[:, i])
     roc_auc2[i] = auc(fpr2[i], tpr2[i])
 
 # Plot ROC
 plt.figure(figsize=(10, 6))
 colors = ['blue', 'red', 'green']
 for i, color in zip(range(n_classes), colors):
-    plt.plot(fpr1[i], tpr1[i], color=color, lw=2, label='ROC Modelo1 (AUC = %0.2f)' % roc_auc1[i])
-    plt.plot(fpr2[i], tpr2[i], color=color, lw=2, linestyle='--', label='ROC Modelo2 (AUC = %0.2f)' % roc_auc2[i])
+    plt.plot(fpr1[i], tpr1[i], color=color, lw=2,
+             label='ROC Modelo1 (AUC = %0.2f)' % roc_auc1[i])
+    plt.plot(fpr2[i], tpr2[i], color=color, lw=2, linestyle='--',
+             label='ROC Modelo2 (AUC = %0.2f)' % roc_auc2[i])
 plt.plot([0, 1], [0, 1], 'k--', lw=2)
 plt.xlabel('Tasa de Falsos Positivos')
 plt.ylabel('Tasa de Verdaderos Positivos')
