@@ -1,7 +1,6 @@
 # en la terminal antes de ejecutar este script, instalar las librerías necesarias con:
 # pip install pandas numpy matplotlib seaborn scipy scikit-learn missingno
 
-
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import label_binarize
 from sklearn.feature_selection import RFE
@@ -31,16 +30,19 @@ print(df.dtypes)
 print("\nPrimeras 5 filas:")
 print(df.head())
 
-# 2. Análisis gráfico de variables categóricas
+# 2. Análisis gráfico de variables categóricas (Gráficos de barras)
 categorical_cols = ['mainroad', 'guestroom', 'basement',
                     'hotwaterheating', 'airconditioning', 'prefarea', 'furnishingstatus']
-plt.figure(figsize=(15, 10))
+
+plt.figure(figsize=(8, 8))
 for i, col in enumerate(categorical_cols, 1):
-    plt.subplot(3, 3, i)
-    df[col].value_counts().plot(kind='bar')
-    plt.title(col)
+    ax = plt.subplot(3, 3, i)
+    counts = df[col].value_counts()
+    ax.bar(counts.index.astype(str), counts.values)
+    ax.set_title(col)
 plt.tight_layout()
 plt.show()
+
 
 # 3. Tabla resumen de variables numéricas
 numeric_cols = ['price', 'area', 'bedrooms', 'bathrooms', 'stories', 'parking']
@@ -63,10 +65,14 @@ stat, p_value = stats.shapiro(df['price'])
 print(f"Shapiro-Wilk Test: estadístico={stat}, p-value={p_value}")
 
 # 6. Identificación de datos atípicos (boxplot)
-plt.figure(figsize=(15, 8))
-df[numeric_cols].boxplot()
-plt.title('Boxplot de Variables Numéricas')
-plt.xticks(rotation=45)
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+axes = axes.ravel()
+
+for i, col in enumerate(numeric_cols):
+    df.boxplot(column=col, ax=axes[i])
+    axes[i].set_title(f'Boxplot de {col}')
+
+plt.tight_layout()
 plt.show()
 
 # 7. Relación entre variable numérica y categórica (price vs furnishingstatus)
